@@ -27,12 +27,12 @@ $reuniones = $stmt->fetchAll();
         <tbody>
             <?php foreach ($reuniones as $r): ?>
             <tr>
-                <td><?php echo date('d/m/Y', strtotime($r['FECHA'])); ?></td>
-                <td><?php echo date('h:i A', strtotime($r['HORA'])); ?></td>
-                <td><?php echo $r['TIPO_REUNION']; ?></td>
-                <td><?php echo $r['LUGAR']; ?></td>
-                <td><?php echo $r['PARROQUIA']; ?></td>
-                <td>
+                <td data-label="Fecha"><?php echo date('d/m/Y', strtotime($r['FECHA'])); ?></td>
+                <td data-label="Hora"><?php echo date('h:i A', strtotime($r['HORA'])); ?></td>
+                <td data-label="Tipo"><?php echo $r['TIPO_REUNION']; ?></td>
+                <td data-label="Lugar"><?php echo $r['LUGAR']; ?></td>
+                <td data-label="Parroquia"><?php echo $r['PARROQUIA']; ?></td>
+                <td data-label="Responsable">
                     <strong><?php echo $r['RESPONSABLE_NOMBRE']; ?></strong><br>
                     <small><?php echo $r['RESPONSABLE_CEDULA']; ?></small>
                 </td>

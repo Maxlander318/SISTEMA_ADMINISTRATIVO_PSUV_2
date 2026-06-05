@@ -6,10 +6,10 @@ check_login();
 $fecha = $_GET['fecha'] ?? '';
 $tipo = $_GET['tipo'] ?? '';
 
-$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TITULO, S.FECHA, S.TIPO 
+$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TIPO_REUNION, S.FECHA
           FROM REGISTRO_ASISTENCIA R 
           JOIN PERSONAS P ON R.ID_PERSONAS = P.ID_PERSONAS 
-          JOIN SESIONES S ON R.ID_SESIONES = S.ID_SESION 
+          JOIN REUNIONES S ON R.ID_REUNIONES = S.ID_REUNION 
           WHERE 1=1";
 $params = [];
 
@@ -18,7 +18,7 @@ if ($fecha) {
     $params[] = $fecha;
 }
 if ($tipo) {
-    $query .= " AND S.TIPO = ?";
+    $query .= " AND S.TIPO_REUNION = ?";
     $params[] = $tipo;
 }
 
@@ -34,16 +34,15 @@ $output = fopen('php://output', 'w');
 // UTF-8 BOM para Excel
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-fputcsv($output, ['Cédula', 'Nombre', 'Apellido', 'Sesión', 'Fecha', 'Tipo', 'Marcación', 'Estado']);
+fputcsv($output, ['Cédula', 'Nombre', 'Apellido', 'Sesión', 'Fecha', 'Marcación', 'Estado']);
 
 foreach ($asistencias as $a) {
     fputcsv($output, [
         $a['CEDULAS'],
         $a['NOMBRES'],
         $a['APELLIDOS'],
-        $a['TITULO'],
+        $a['TIPO_REUNION'],
         $a['FECHA'],
-        $a['TIPO'],
         $a['MARCACION'],
         $a['ESTADO']
     ]);

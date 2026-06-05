@@ -7,10 +7,10 @@ require_once __DIR__ . '/../config/database.php';
 $fecha = $_GET['fecha'] ?? '';
 $tipo = $_GET['tipo'] ?? '';
 
-$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TITULO, S.FECHA, S.TIPO 
+$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TIPO_REUNION, S.FECHA
           FROM REGISTRO_ASISTENCIA R 
           JOIN PERSONAS P ON R.ID_PERSONAS = P.ID_PERSONAS 
-          JOIN SESIONES S ON R.ID_SESIONES = S.ID_SESION 
+          JOIN REUNIONES S ON R.ID_REUNIONES = S.ID_REUNION 
           WHERE 1=1";
 $params = [];
 
@@ -19,7 +19,7 @@ if ($fecha) {
     $params[] = $fecha;
 }
 if ($tipo) {
-    $query .= " AND S.TIPO = ?";
+    $query .= " AND S.TIPO_REUNION = ?";
     $params[] = $tipo;
 }
 
@@ -29,18 +29,18 @@ $stmt->execute($params);
 $asistencias = $stmt->fetchAll();
 
 // Tipos de sesión únicos para el filtro
-$tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_COLUMN);
+$tipos = $pdo->query("SELECT DISTINCT TIPO_REUNION FROM REUNIONES")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <div class="card">
     <h3>Filtros de Consulta</h3>
     <form method="GET" style="margin-top: 1rem; display: flex; gap: 1rem; align-items: flex-end;">
         <div class="form-group" style="margin-bottom: 0;">
-            <label>Fecha de Sesión</label>
+            <label>Fecha de reunión</label>
             <input type="date" name="fecha" value="<?php echo $fecha; ?>">
         </div>
         <div class="form-group" style="margin-bottom: 0;">
-            <label>Tipo de Sesión</label>
+            <label>Tipo de reunión</label>
             <select name="tipo">
                 <option value="">Todos</option>
                 <?php foreach ($tipos as $t): ?>
@@ -49,7 +49,7 @@ $tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_
             </select>
         </div>
         <button type="submit" class="btn btn-primary">Buscar</button>
-        <a href="dashboard.php" class="btn btn-secondary";">Limpiar</a>
+        <a href="dashboard.php" class="btn btn-secondary";>Limpiar</a>
     </form>
 </div>
 
@@ -63,9 +63,8 @@ $tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_
             <tr>
                 <th>Cédula</th>
                 <th>Persona</th>
-                <th>Sesión</th>
+                <th>Tipo de reunión</th>
                 <th>Fecha</th>
-                <th>Tipo</th>
                 <th>Hora Marcación</th>
                 <th>Estado</th>
             </tr>
@@ -75,9 +74,8 @@ $tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_
             <tr>
                 <td><?php echo $a['CEDULAS']; ?></td>
                 <td><?php echo $a['NOMBRES'] . ' ' . $a['APELLIDOS']; ?></td>
-                <td><?php echo $a['TITULO']; ?></td>
+                <td><?php echo $a['TIPO_REUNION']; ?></td>
                 <td><?php echo date('d/m/Y', strtotime($a['FECHA'])); ?></td>
-                <td><?php echo $a['TIPO']; ?></td>
                 <td><?php echo date('h:i:s A', strtotime($a['MARCACION'])); ?></td>
                 <td><span style="color: var(--primary-color); font-weight: 600;"><?php echo $a['ESTADO']; ?></span></td>
             </tr>

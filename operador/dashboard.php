@@ -7,10 +7,10 @@ require_once __DIR__ . '/../config/database.php';
 $fecha = $_GET['fecha'] ?? '';
 $tipo = $_GET['tipo'] ?? '';
 
-$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TITULO, S.FECHA, S.TIPO 
+$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TIPO_REUNION, S.FECHA
           FROM REGISTRO_ASISTENCIA R 
           JOIN PERSONAS P ON R.ID_PERSONAS = P.ID_PERSONAS 
-          JOIN SESIONES S ON R.ID_SESIONES = S.ID_SESION 
+          JOIN REUNIONES S ON R.ID_REUNIONES = S.ID_REUNION 
           WHERE 1=1";
 $params = [];
 
@@ -19,7 +19,7 @@ if ($fecha) {
     $params[] = $fecha;
 }
 if ($tipo) {
-    $query .= " AND S.TIPO = ?";
+    $query .= " AND S.TIPO_REUNION = ?";
     $params[] = $tipo;
 }
 
@@ -29,7 +29,7 @@ $stmt->execute($params);
 $asistencias = $stmt->fetchAll();
 
 // Tipos de sesión únicos para el filtro
-$tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_COLUMN);
+$tipos = $pdo->query("SELECT DISTINCT TIPO_REUNION FROM REUNIONES")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <div class="card">
@@ -79,9 +79,9 @@ $tipos = $pdo->query("SELECT DISTINCT TIPO FROM SESIONES")->fetchAll(PDO::FETCH_
             <tr>
                 <td><?php echo $a['CEDULAS']; ?></td>
                 <td><?php echo $a['NOMBRES'] . ' ' . $a['APELLIDOS']; ?></td>
-                <td><?php echo $a['TITULO']; ?></td>
+                <td><?php echo $a['TIPO_REUNION']; ?></td>
                 <td><?php echo date('d/m/Y', strtotime($a['FECHA'])); ?></td>
-                <td><?php echo $a['TIPO']; ?></td>
+                <td><?php echo $a['TIPO_REUNION']; ?></td>
                 <td><?php echo date('h:i:s A', strtotime($a['MARCACION'])); ?></td>
                 <td><span style="color: var(--success); font-weight: 600;"><?php echo $a['ESTADO']; ?></span></td>
             </tr>

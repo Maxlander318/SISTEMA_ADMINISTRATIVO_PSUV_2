@@ -73,6 +73,11 @@ $pdf->Cell(40, 10, utf8_decode(' Lugar:'), 1, 0, 'L', true);
 $pdf->SetFont('Arial', '', 11);
 $pdf->MultiCell(150, 10, utf8_decode(' ' . $reunion['LUGAR']), 1, 'L');
 
+$pdf->SetFont('Arial', 'B', 11);
+$pdf->Cell(40, 10, utf8_decode(' Descripción:'), 1, 0, 'L', true);
+$pdf->SetFont('Arial', '', 11);
+$pdf->MultiCell(150, 10, utf8_decode(' ' . $reunion['DESCRIPCION']), 1, 'L');
+
 $pdf->Ln(10);
 
 // Sección 2: Responsable
@@ -102,7 +107,7 @@ $pdf->SetFont('Arial', 'B', 10);
 $pdf->Cell(95, 10, '__________________________', 0, 0, 'C');
 $pdf->Cell(95, 10, '__________________________', 0, 1, 'C');
 $pdf->Cell(95, 5, 'Firma del Responsable', 0, 0, 'C');
-$pdf->Cell(95, 5, 'Sello / Autorizado', 0, 1, 'C');
+$pdf->Cell(95, 5, 'Recepcionado por:', 0, 1, 'C');
 
 $pdf->Output('I', 'Ficha_Reunion_' . $id . '.pdf');
 ?>

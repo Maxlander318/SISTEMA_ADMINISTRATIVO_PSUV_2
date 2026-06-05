@@ -8,10 +8,10 @@ check_login();
 $fecha = $_GET['fecha'] ?? '';
 $tipo = $_GET['tipo'] ?? '';
 
-$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TITULO, S.FECHA, S.TIPO 
+$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TIPO_REUNION, S.FECHA
           FROM REGISTRO_ASISTENCIA R 
           JOIN PERSONAS P ON R.ID_PERSONAS = P.ID_PERSONAS 
-          JOIN SESIONES S ON R.ID_SESIONES = S.ID_SESION 
+          JOIN REUNIONES S ON R.ID_REUNIONES = S.ID_REUNION 
           WHERE 1=1";
 $params = [];
 
@@ -20,7 +20,7 @@ if ($fecha) {
     $params[] = $fecha;
 }
 if ($tipo) {
-    $query .= " AND S.TIPO = ?";
+    $query .= " AND S.TIPO_REUNION = ?";
     $params[] = $tipo;
 }
 
@@ -64,7 +64,7 @@ $pdf->SetTextColor(0, 0, 0);
 foreach ($asistencias as $a) {
     $pdf->Cell(25, 7, $a['CEDULAS'], 1, 0, 'C');
     $pdf->Cell(60, 7, utf8_decode($a['NOMBRES'] . ' ' . $a['APELLIDOS']), 1, 0, 'L');
-    $pdf->Cell(40, 7, utf8_decode($a['TITULO']), 1, 0, 'L');
+    $pdf->Cell(40, 7, utf8_decode($a['TIPO_REUNION']), 1, 0, 'L');
     $pdf->Cell(25, 7, date('d/m/Y', strtotime($a['FECHA'])), 1, 0, 'C');
     $pdf->Cell(25, 7, date('h:i A', strtotime($a['MARCACION'])), 1, 0, 'C');
     $pdf->Cell(15, 7, $a['ESTADO'], 1, 1, 'C');

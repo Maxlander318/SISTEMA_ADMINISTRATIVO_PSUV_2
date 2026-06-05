@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hora = sprintf("%02d:%s:00", $h_base, $m_base);
 
         $tipo = $_POST['tipo_reunion'];
+        $descripcion =  $_POST['descripcion']; 
         $lugar = $_POST['lugar'];
         $parroquia = $_POST['parroquia'];
         $r_nombre = $_POST['r_nombre'];
@@ -33,14 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $r_telefono = $_POST['r_telefono'];
 
         if ($_POST['action'] === 'create') {
-            $stmt = $pdo->prepare("INSERT INTO REUNIONES (FECHA, HORA, TIPO_REUNION, LUGAR, PARROQUIA, RESPONSABLE_NOMBRE, RESPONSABLE_CEDULA, RESPONSABLE_TELEFONO) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$fecha, $hora, $tipo, $lugar, $parroquia, $r_nombre, $r_cedula, $r_telefono]);
+            $stmt = $pdo->prepare("INSERT INTO REUNIONES (FECHA, HORA, TIPO_REUNION, DESCRIPCION, LUGAR, PARROQUIA, RESPONSABLE_NOMBRE, RESPONSABLE_CEDULA, RESPONSABLE_TELEFONO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$fecha, $hora, $tipo, $descripcion, $lugar, $parroquia, $r_nombre, $r_cedula, $r_telefono]);
             log_action($_SESSION['user_id'], "Creada reunión: $tipo", "REUNIONES", $pdo->lastInsertId());
             set_flash_message("Reunión programada correctamente.");
         } else {
             $id = $_POST['id_reunion'];
-            $stmt = $pdo->prepare("UPDATE REUNIONES SET FECHA=?, HORA=?, TIPO_REUNION=?, LUGAR=?, PARROQUIA=?, RESPONSABLE_NOMBRE=?, RESPONSABLE_CEDULA=?, RESPONSABLE_TELEFONO=? WHERE ID_REUNION=?");
-            $stmt->execute([$fecha, $hora, $tipo, $lugar, $parroquia, $r_nombre, $r_cedula, $r_telefono, $id]);
+            $stmt = $pdo->prepare("UPDATE REUNIONES SET FECHA=?, HORA=?, TIPO_REUNION=?, DESCRIPCION=?, LUGAR=?, PARROQUIA=?, RESPONSABLE_NOMBRE=?, RESPONSABLE_CEDULA=?, RESPONSABLE_TELEFONO=? WHERE ID_REUNION=?");
+            $stmt->execute([$fecha, $hora, $tipo, $descripcion, $lugar, $parroquia, $r_nombre, $r_cedula, $r_telefono, $id]);
             log_action($_SESSION['user_id'], "Editada reunión ID: $id", "REUNIONES", $id);
             set_flash_message("Reunión actualizada.");
         }
@@ -122,12 +123,45 @@ if (isset($_GET['edit_id'])) {
         </div>
         <div class="form-group">
             <label>Tipo de Reunión</label>
-            <input type="text" name="tipo_reunion" value="<?php echo $edit_data['TIPO_REUNION'] ?? ''; ?>" placeholder="Asamblea, Jornada..." required>
+            <select id="tipo_reunion" name="tipo_reunion" required>
+                <option value="ORDINARIA" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'ORDINARIA') ? 'selected' : ''; ?>>ORDINARIA</option>
+                <option value="AMPLIADA" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'AMPLIADA') ? 'selected' : ''; ?>>AMPLIADA</option>
+                <option value="INFORMATIVA" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'INFORMATIVA') ? 'selected' : ''; ?>>INFORMATIVA</option>
+                <option value="FORMATIVA" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'FORMATIVA') ? 'selected' : ''; ?>>FORMATIVA</option>
+                <option value="SOCIALES" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'SOCIALES') ? 'selected' : ''; ?>>SOCIALES</option>
+                <option value="VIDEOCONFERENCIAS" <?php echo (isset($edit_data['TIPO_REUNION']) && $edit_data['TIPO_REUNION'] == 'VIDEOCONFERENCIAS') ? 'selected' : ''; ?>>VIDEOCONFERENCIAS</option>
+            </select>
         </div>
         <div class="form-group" style="grid-column: span 2;">
             <label>Lugar exacto</label>
             <input type="text" name="lugar" value="<?php echo $edit_data['LUGAR'] ?? ''; ?>" required>
         </div>
+
+        <div style="position: relative; grid-column: span 3; text-align: center; margin-top: 1rem;">
+            <label>Descripción</label>
+            <input type="text" 
+                name="descripcion"
+                id="descripcion"
+                value="<?php echo $edit_data['DESCRIPCION'] ?? ''; ?>" 
+                maxlength="100"
+                style="width: 100%; background: #f1f5f9; color: #475569; padding: 0.5rem; padding-right: 4rem; border-radius: 4px;">
+
+            <div style="position: absolute; bottom: 8px; right: 8px; font-size: 11px; color: #64748b; background: rgba(241, 245, 249, 0.9); padding: 2px 5px; border-radius: 3px;">
+                <span id="contador">0</span> / 100
+            </div>
+        </div>
+
+        <script>
+            const input = document.getElementById('descripcion');
+            const contador = document.getElementById('contador');
+            
+            function actualizarContador() {
+                contador.textContent = input.value.length;
+            }
+            
+            input.addEventListener('input', actualizarContador);
+            actualizarContador();
+        </script>
         
         <div style="grid-column: span 3;"><hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0.5rem 0;"><h4>Datos del Responsable</h4></div>
 
@@ -168,20 +202,20 @@ if (isset($_GET['edit_id'])) {
         <tbody>
             <?php foreach ($reuniones as $r): ?>
             <tr>
-                <td>
+                <td data-label="Fecha/Hora">
                     <strong><?php echo date('d/m/Y', strtotime($r['FECHA'])); ?></strong><br>
                     <span style="color: var(--secondary-color); font-weight: 600;"><?php echo date('h:i A', strtotime($r['HORA'])); ?></span>
                 </td>
-                <td>
+                <td data-label="Actividad">
                     <strong><?php echo $r['TIPO_REUNION']; ?></strong><br>
                     <small><?php echo $r['LUGAR']; ?></small><br>
                     <span class="badge" style="background: <?php echo $r['ESTADO'] === 'Finalizada' ? '#10b981' : '#f59e0b'; ?>; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">
                         <?php echo $r['ESTADO'] ?? 'Programada'; ?>
                     </span>
                 </td>
-                <td><?php echo $r['PARROQUIA']; ?></td>
-                <td><?php echo $r['RESPONSABLE_NOMBRE']; ?></td>
-                <td>
+                <td data-label="Parroquia"><?php echo $r['PARROQUIA']; ?></td>
+                <td data-label="Responsable"><?php echo $r['RESPONSABLE_NOMBRE']; ?></td>
+                <td data-label="Acciones">
                     <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
                         <?php if (($r['ESTADO'] ?? 'Programada') !== 'Finalizada'): ?>
                         <form method="POST" style="display:inline;">

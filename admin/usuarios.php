@@ -42,13 +42,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash_message("Estado de usuario actualizado.");
     }
 
-    // Eliminar Usuario
     if (isset($_POST['action']) && $_POST['action'] === 'delete') {
         $id = $_POST['id_usuario'];
-        $stmt = $pdo->prepare("DELETE FROM USUARIOS WHERE ID_USUARIO = ?");
-        $stmt->execute([$id]);
-        log_action($_SESSION['user_id'], "Eliminado usuario ID: $id", "USUARIOS", $id);
-        set_flash_message("Usuario eliminado del sistema.");
+        
+        try {
+            // Iniciar transacción
+            $pdo->beginTransaction();
+            
+            // Primero eliminar los logs asociados a este usuario
+            $stmt = $pdo->prepare("DELETE FROM logs_sistema WHERE ID_USUARIO = ?");
+            $stmt->execute([$id]);
+            
+            // Luego eliminar el usuario
+            $stmt = $pdo->prepare("DELETE FROM USUARIOS WHERE ID_USUARIO = ?");
+            $stmt->execute([$id]);
+            
+            // Confirmar transacción
+            $pdo->commit();
+            
+            log_action($_SESSION['user_id'], "Eliminado usuario ID: $id", "USUARIOS", $id);
+            set_flash_message("Usuario eliminado del sistema.");
+        } catch (Exception $e) {
+            // Revertir cambios en caso de error
+            $pdo->rollBack();
+            set_flash_message("Error al eliminar usuario: " . $e->getMessage(), "danger");
+        }
     }
 }
 
@@ -111,18 +129,18 @@ $usuarios = $pdo->query("SELECT * FROM USUARIOS ORDER BY ID_USUARIO DESC")->fetc
         <tbody>
             <?php foreach ($usuarios as $u): ?>
             <tr>
-                <td><?php echo $u['ID_USUARIO']; ?></td>
-                <td><?php echo $u['NOMBRE_COMPLETO']; ?></td>
-                <td><?php echo $u['NOMBRE_USUARIO']; ?></td>
-                <td><span class="badge" style="background: <?php echo $u['NIVEL'] == 'admin' ? '#dcfce7' : '#f1f5f9'; ?>; padding: 4px 8px; border-radius: 4px;"><?php echo ucfirst($u['NIVEL']); ?></span></td>
-                <td>
+                <td data-label="ID"><?php echo $u['ID_USUARIO']; ?></td>
+                <td data-label="Nombre"><?php echo $u['NOMBRE_COMPLETO']; ?></td>
+                <td data-label="Usuario"><?php echo $u['NOMBRE_USUARIO']; ?></td>
+                <td data-label="Nivel"><span class="badge" style="background: <?php echo $u['NIVEL'] == 'admin' ? '#dcfce7' : '#f1f5f9'; ?>; padding: 4px 8px; border-radius: 4px;"><?php echo ucfirst($u['NIVEL']); ?></span></td>
+                <td data-label="Estado">
                     <?php if ($u['ACTIVO']): ?>
                         <span style="color: var(--success);">● Activo</span>
                     <?php else: ?>
                         <span style="color: var(--danger);">● Inactivo</span>
                     <?php endif; ?>
                 </td>
-                <td>
+                <td data-label="Acciones">
                     <div style="display: flex; gap: 0.5rem;">
                         <form method="POST" style="display: inline;">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -174,12 +192,12 @@ $usuarios = $pdo->query("SELECT * FROM USUARIOS ORDER BY ID_USUARIO DESC")->fetc
                 $duracion = $diff->format('%h h %i m');
             ?>
             <tr>
-                <td><strong><?php echo $uo['NOMBRE_COMPLETO']; ?></strong><br><small>@<?php echo $uo['NOMBRE_USUARIO']; ?></small></td>
-                <td><?php echo ucfirst($uo['NIVEL']); ?></td>
-                <td><?php echo date('d/m h:i A', strtotime($uo['ULTIMA_CONEXION'])); ?></td>
-                <td><?php echo date('h:i:s A', strtotime($uo['ULTIMA_ACTIVIDAD'])); ?></td>
-                <td><?php echo $duracion; ?></td>
-                <td><span style="color: var(--success); font-weight: 700;">● Online</span></td>
+                <td data-label="Usuario"><strong><?php echo $uo['NOMBRE_COMPLETO']; ?></strong><br><small>@<?php echo $uo['NOMBRE_USUARIO']; ?></small></td>
+                <td data-label="Rol"><?php echo ucfirst($uo['NIVEL']); ?></td>
+                <td data-label="Inicio"><?php echo date('d/m h:i A', strtotime($uo['ULTIMA_CONEXION'])); ?></td>
+                <td data-label="Actividad"><?php echo date('h:i:s A', strtotime($uo['ULTIMA_ACTIVIDAD'])); ?></td>
+                <td data-label="Tiempo"><?php echo $duracion; ?></td>
+                <td data-label="Estado"><span style="color: var(--success); font-weight: 700;">● Online</span></td>
             </tr>
             <?php endforeach; ?>
             <?php if (empty($online_users)): ?>

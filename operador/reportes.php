@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // 2. Verificar si ya está registrado en esa sesión
-            $stmt = $pdo->prepare("SELECT ID_REGISTRO FROM REGISTRO_ASISTENCIA WHERE ID_PERSONAS = ? AND ID_SESIONES = ?");
+            $stmt = $pdo->prepare("SELECT ID_REGISTRO FROM REGISTRO_ASISTENCIA WHERE ID_PERSONAS = ? AND ID_REUNIONES = ?");
             $stmt->execute([$id_persona, $id_sesion]);
             
             if (!$stmt->fetch()) {
-                $stmt = $pdo->prepare("INSERT INTO REGISTRO_ASISTENCIA (ID_PERSONAS, ID_SESIONES, ESTADO) VALUES (?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO REGISTRO_ASISTENCIA (ID_PERSONAS, ID_REUNIONES, ESTADO) VALUES (?, ?, ?)");
                 $stmt->execute([$id_persona, $id_sesion, $estado]);
-                log_action($_SESSION['user_id'], "Registrada asistencia de $cedula en sesión ID: $id_sesion", "REGISTRO_ASISTENCIA", $pdo->lastInsertId());
+                log_action($_SESSION['user_id'], "Registrada asistencia de $cedula", "REGISTRO_ASISTENCIA", $pdo->lastInsertId());
                 set_flash_message("Asistencia registrada correctamente.");
             } else {
                 set_flash_message("Esta persona ya está registrada en esta sesión.", "warning");
@@ -67,24 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Obtener Sesiones para el Select
-$sesiones = $pdo->query("SELECT * FROM SESIONES ORDER BY FECHA DESC")->fetchAll();
+$sesiones = $pdo->query("SELECT * FROM REUNIONES ORDER BY FECHA DESC")->fetchAll();
 
 // Obtener Asistencias Recientes
-$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TITULO, S.FECHA 
+$query = "SELECT R.*, P.NOMBRES, P.APELLIDOS, P.CEDULAS, S.TIPO_REUNION, S.FECHA 
           FROM REGISTRO_ASISTENCIA R 
           JOIN PERSONAS P ON R.ID_PERSONAS = P.ID_PERSONAS 
-          JOIN SESIONES S ON R.ID_SESIONES = S.ID_SESION 
+          JOIN REUNIONES S ON R.ID_REUNIONES = S.ID_REUNION 
           ORDER BY R.MARCACION DESC LIMIT 50";
 $asistencias = $pdo->query($query)->fetchAll();
-
-// API interna para buscar personas por cédula
-if (isset($_GET['buscar_cedula'])) {
-    header('Content-Type: application/json');
-    $stmt = $pdo->prepare("SELECT NOMBRES, APELLIDOS FROM PERSONAS WHERE CEDULAS = ?");
-    $stmt->execute([$_GET['buscar_cedula']]);
-    echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
-    exit();
-}
 ?>
 
 <div class="card">
@@ -94,25 +85,22 @@ if (isset($_GET['buscar_cedula'])) {
         <input type="hidden" name="action" value="register">
         
         <div class="form-group">
-            <label>Sesión / Evento</label>
+            <label>Tipo de reunión</label>
             <select name="id_sesion" required>
                 <option value="">Seleccione una sesión...</option>
                 <?php foreach ($sesiones as $s): ?>
-                    <option value="<?php echo $s['ID_SESION']; ?>"><?php echo date('d/m/Y', strtotime($s['FECHA'])) . ' - ' . $s['TITULO']; ?></option>
+                    <option value="<?php echo $s['ID_REUNION']; ?>"><?php echo date('d/m/Y', strtotime($s['FECHA'])) . ' - ' . $s['TIPO_REUNION']; ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="form-group">
             <label>Cédula</label>
-            <input type="text" name="cedula" id="cedula_input" placeholder="Ej: 12345678" required autocomplete="off">
-            <small id="buscando_label" style="display:none; color: var(--primary-color);">Buscando...</small>
+            <input type="text" name="cedula" id="cedula_input" placeholder="Ej: 12345678" required>
         </div>
         <div class="form-group">
             <label>Estado</label>
             <select name="estado">
                 <option value="Presente">Presente</option>
-                <option value="Justificado">Justificado</option>
-                <option value="Ausente">Ausente</option>
             </select>
         </div>
         <div class="form-group">
@@ -128,29 +116,6 @@ if (isset($_GET['buscar_cedula'])) {
         </div>
     </form>
 </div>
-
-<script>
-document.getElementById('cedula_input').addEventListener('blur', function() {
-    const cedula = this.value;
-    if (cedula.length > 4) {
-        document.getElementById('buscando_label').style.display = 'block';
-        fetch('reportes.php?buscar_cedula=' + cedula)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('buscando_label').style.display = 'none';
-                if (data) {
-                    document.getElementById('nombres_input').value = data.NOMBRES;
-                    document.getElementById('apellidos_input').value = data.APELLIDOS;
-                    document.getElementById('nombres_input').style.background = '#f0fdf4';
-                    document.getElementById('apellidos_input').style.background = '#f0fdf4';
-                } else {
-                    document.getElementById('nombres_input').style.background = '#fff';
-                    document.getElementById('apellidos_input').style.background = '#fff';
-                }
-            });
-    }
-});
-</script>
 
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -170,12 +135,12 @@ document.getElementById('cedula_input').addEventListener('blur', function() {
         <tbody>
             <?php foreach ($asistencias as $a): ?>
             <tr>
-                <td><?php echo $a['CEDULAS']; ?></td>
-                <td><?php echo $a['NOMBRES'] . ' ' . $a['APELLIDOS']; ?></td>
-                <td><?php echo $a['TITULO']; ?></td>
-                <td><?php echo date('d/m/Y h:i A', strtotime($a['MARCACION'])); ?></td>
-                <td><span style="color: var(--success); font-weight: 600;"><?php echo $a['ESTADO']; ?></span></td>
-                <td>
+                <td data-label="Cédula"><?php echo $a['CEDULAS']; ?></td>
+                <td data-label="Persona"><?php echo $a['NOMBRES'] . ' ' . $a['APELLIDOS']; ?></td>
+                <td data-label="Sesión"><?php echo $a['TIPO_REUNION']; ?></td>
+                <td data-label="Marcación"><?php echo date('d/m/Y h:i A', strtotime($a['MARCACION'])); ?></td>
+                <td data-label="Estado"><span style="color: var(--success); font-weight: 600;"><?php echo $a['ESTADO']; ?></span></td>
+                <td data-label="Acciones">
                     <form method="POST" onsubmit="return confirm('¿Eliminar este registro?')">
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="action" value="delete">

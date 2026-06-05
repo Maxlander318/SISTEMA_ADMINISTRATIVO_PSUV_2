@@ -6,10 +6,10 @@ check_admin();
 
 // Resumen por Sesión
 $resumen_sesiones = $pdo->query("
-    SELECT S.TITULO, S.FECHA, S.TIPO, COUNT(R.ID_REGISTRO) as TOTAL_ASISTENTES
-    FROM SESIONES S
-    LEFT JOIN REGISTRO_ASISTENCIA R ON S.ID_SESION = R.ID_SESIONES
-    GROUP BY S.ID_SESION
+    SELECT S.TIPO_REUNION, S.FECHA, COUNT(R.ID_REGISTRO) as TOTAL_ASISTENTES
+    FROM REUNIONES S
+    LEFT JOIN REGISTRO_ASISTENCIA R ON S.ID_REUNION = R.ID_REUNIONES
+    GROUP BY S.ID_REUNION
     ORDER BY S.FECHA DESC
 ")->fetchAll();
 
@@ -37,12 +37,11 @@ $actividad_usuarios = $pdo->query("
         <tbody>
             <?php foreach ($resumen_sesiones as $s): ?>
             <tr>
-                <td><?php echo $s['TITULO']; ?></td>
+                <td><?php echo $s['TIPO_REUNION']; ?></td>
                 <td><?php echo $s['FECHA']; ?></td>
-                <td><?php echo $s['TIPO']; ?></td>
                 <td><strong><?php echo $s['TOTAL_ASISTENTES']; ?></strong></td>
                 <td>
-                    <a href="../operador/exportar_pdf.php?fecha=<?php echo $s['FECHA']; ?>&tipo=<?php echo $s['TIPO']; ?>" class="btn btn-primary" style="font-size: 0.8rem;" target="_blank">Ver Detalle PDF</a>
+                    <a href="../operador/exportar_pdf.php?fecha=<?php echo $s['FECHA']; ?>&tipo=<?php echo $s['TIPO_REUNION']; ?>" class="btn btn-primary" style="font-size: 0.8rem;" target="_blank">Ver Detalle PDF</a>
                 </td>
             </tr>
             <?php endforeach; ?>

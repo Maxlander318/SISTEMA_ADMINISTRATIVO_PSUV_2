@@ -11,7 +11,7 @@ $user_level = $_SESSION['user_level'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Administrativo</title>
-    <link rel="stylesheet" href="../public/assets/css/style.css?v=1.7">
+    <link rel="stylesheet" href="../public/assets/css/style.css?v=3.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -46,9 +46,6 @@ $user_level = $_SESSION['user_level'];
                 <a href="dashboard.php" class="menu-item <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>">
                     <i class="fas fa-tachometer-alt"></i> Panel Operador
                 </a>
-                <a href="sesiones.php" class="menu-item <?php echo $current_page == 'sesiones.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-list-ul"></i> Gestionar Sesiones
-                </a>
                 <a href="reuniones.php" class="menu-item <?php echo $current_page == 'reuniones.php' ? 'active' : ''; ?>">
                     <i class="fas fa-calendar-plus"></i> Agendas semanales
                 </a>
@@ -66,22 +63,57 @@ $user_level = $_SESSION['user_level'];
                     <i class="fas fa-clipboard-check"></i> Asistencias reportadas
                 </a>
             <?php endif; ?>
-        </nav>
-        <div style="padding: 1rem;">
-            <a href="../public/logout.php" class="menu-item" style="color: #000000ff;">
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 0.5rem 0;">
+            <a href="../public/logout.php" class="menu-item" style="color: #b30000; font-weight: 700;">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
             </a>
-        </div>
+        </nav>
     </div>
+    <div class="sidebar-overlay"></div>
 
     <div class="main-wrapper">
         <header>
-            <div class="header-left">
-                <h2 style="color: var(--primary-color);"><?php echo $title ?? 'Dashboard'; ?></h2>
+            <div class="header-left" style="display: flex; align-items: center; gap: 1rem;">
+                <button id="sidebarToggle" class="btn" style="display: none; padding: 0.5rem; background: var(--primary-color); color: white;">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 style="color: var(--primary-color); margin: 0;"><?php echo $title ?? 'Dashboard'; ?></h2>
             </div>
             <div class="header-right">
                 <span>Bienvenido, <strong><?php echo $_SESSION['user_name']; ?></strong> | Rol: <strong><?php echo ucfirst($user_level); ?></strong></span>
             </div>
         </header>
+
+        <style>
+            @media (max-width: 1024px) {
+                #sidebarToggle {
+                    display: flex !important;
+                }
+            }
+        </style>
+
+        <script>
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            const toggle = document.getElementById('sidebarToggle');
+
+            toggle?.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+            
+            overlay?.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+            });
+            
+            // Cerrar al hacer click fuera en móvil
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 1024 && 
+                    !sidebar.contains(event.target) && 
+                    !toggle.contains(event.target) && 
+                    sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        </script>
         <main class="content-area">
             <?php display_flash_message(); ?>
