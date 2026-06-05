@@ -14,13 +14,7 @@ Este sistema permite el control de asistencia y la gestión administrativa con d
 5. **Nota sobre PDF:** El sistema utiliza la librería FPDF. Asegúrese de que los archivos de la librería estén en `includes/fpdf/`.
 6. Acceda al sistema mediante: `http://localhost/SISTEMA_ADMINISTRATIVO_PSUV_2/public/login.php`
 
-## Credenciales por Defecto
-- **Administrador:**
-  - Usuario: `admin`
-  - Contraseña: `admin123`
-- **Operador:**
-  - Usuario: `operador`
-  - Contraseña: `admin123`
+## Cree los usuarios correspondientes, minimo un administrador.
 
 ## Funcionalidades Principales
 - **Seguridad:** PDO, password_hash, CSRF protection.
